@@ -1,26 +1,30 @@
 package org.garuda.kademlia;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import com.dampcake.bencode.Bencode;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.util.Arrays;
 
 public class Main {
-    public static void main(String[] args) {
-        NodeId node = new NodeId(new byte[20]);
 
-        Bencode bencode = new Bencode();
-        Map<String, Object> map = new LinkedHashMap<>();
+    public static void main(String[] args) throws Exception {
 
-        map.put("id", node.id());
-        Map<String, Object> query = new LinkedHashMap<>();
+        Node node = new Node();
 
-        query.put("y", "q");
-        query.put("q", "ping");
-        query.put("a", map);
+        InetAddress addr = InetAddress.getByName("dht.transmissionbt.com");
+        int port = 6881;
 
-        byte[] wireBytes = bencode.encode(query);
+        node.ping(addr, port);
 
-        System.out.println("bytes: " + wireBytes.hashCode());
+        byte[] buffer = new byte[4096];
+        DatagramPacket response = new DatagramPacket(buffer, buffer.length);
+        node.getSocket().setSoTimeout(5000);
+
+        node.getSocket().receive(response);
+
+        byte[] received = Arrays.copyOf(response.getData(), response.getLength());
+        System.out.println("Raw reply: " + received);
+
+        Object decoded = Bencoder.decodeMap(received);
+        System.out.println("Decoded: " + decoded);
     }
 }

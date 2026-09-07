@@ -1,12 +1,8 @@
 package org.garuda.kademlia;
 
-import java.security.SecureRandom;
 import java.util.Arrays;
 
 public record NodeId(byte[] id) {
-
-    private static final SecureRandom RANDOM = new SecureRandom();
-
     public NodeId {
         if (id.length != 20) {
             throw new IllegalArgumentException("NodeId must be at least 20 bytes");
@@ -15,7 +11,7 @@ public record NodeId(byte[] id) {
 
     public static NodeId generateRandom() {
         byte[] id = new byte[20];
-        RANDOM.nextBytes(id);
+        Node.RANDOM.nextBytes(id);
         return new NodeId(id);
     }
 
