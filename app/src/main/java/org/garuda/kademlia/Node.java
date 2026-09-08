@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import org.garuda.kademlia.rpc.Message;
 import org.garuda.kademlia.rpc.MessageType;
 import org.garuda.kademlia.rpc.PendingTx;
+import org.garuda.kademlia.utils.Utils;
 
 public class Node {
 
@@ -54,11 +55,11 @@ public class Node {
 
     public void ping(InetAddress address, int port) throws Exception {
         // build message
-        byte[] tid = Message.generateTID();
+        byte[] tid = Utils.generateTID();
         byte[] message = Message.createPingMessage(tid, this.id, "q", MessageType.PING);
 
         // store transaction
-        String tidKey = Message.hex(tid);
+        String tidKey = Utils.hex(tid);
         pending.put(tidKey, new PendingTx(address, MessageType.PING));
 
         // send message
@@ -117,7 +118,7 @@ public class Node {
             return;
         }
 
-        String y = Message.getString(message, "y");
+        String y = Utils.getString(message, "y");
 
         if ("q".equals(y)) { // Query
             handleQuery(message, fromAddress, port);
@@ -129,7 +130,7 @@ public class Node {
     }
 
     private void handleQuery(Map<String, Object> message, InetAddress address, int port) throws Exception {
-        String query = Message.getString(message, "q");
+        String query = Utils.getString(message, "q");
 
         if ("ping".equals(query)) {
             respondePing(address, port);
@@ -137,8 +138,8 @@ public class Node {
     }
 
     private void handleResponse(Map<String, Object> message, InetAddress address, int port) {
-        byte[] tid = Message.getBytes(message, "t");
-        String tidKey = Message.hex(tid);
+        byte[] tid = Utils.getBytes(message, "t");
+        String tidKey = Utils.hex(tid);
 
         PendingTx tx = pending.remove(tidKey);
         if (tx == null) {
@@ -158,8 +159,8 @@ public class Node {
     }
 
     private void handleError(Map<String, Object> message, InetAddress address, int port) {
-        byte[] tid = Message.getBytes(message, "t");
-        String tidKey = Message.hex(tid);
+        byte[] tid = Utils.getBytes(message, "t");
+        String tidKey = Utils.hex(tid);
 
         PendingTx tx = pending.remove(tidKey);
         if (tx == null) {
@@ -169,7 +170,7 @@ public class Node {
 
         List<Object> errorList = (List<Object>) message.get("e");
         long errorCode = (Long) errorList.get(0);
-        String errorMsg = Message.bufferToString((ByteBuffer) errorList.get(1));
+        String errorMsg = Utils.bufferToString((ByteBuffer) errorList.get(1));
 
         System.err.println("Error received from" + address + "from port: " + port + " [" + errorCode + "] " + errorMsg);
     }
@@ -180,7 +181,7 @@ public class Node {
     private void handlePing(Map<String, Object> message, InetAddress address, int port) {
         // get contact
         Map<String, Object> contactInfo = (Map<String, Object>) message.get("r");
-        byte[] contactId = Message.getBytes(contactInfo, "id");
+        byte[] contactId = Utils.getBytes(contactInfo, "id");
 
         NodeId nodeId = new NodeId(contactId);
         Contact contact = new Contact(nodeId, address, port);
@@ -195,7 +196,7 @@ public class Node {
     // -------------------------
     private void respondePing(InetAddress address, int port) throws Exception {
         logger.info("PING query received");
-        byte[] tid = Message.generateTID();
+        byte[] tid = Utils.generateTID();
         byte[] message = Message.createPingMessage(tid, this.id, "r", MessageType.PONG);
 
         // send message
