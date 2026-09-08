@@ -58,4 +58,10 @@ public record Message(
     public static String getString(Map<String, Object> message, String key) {
         return new String(getBytes(message, key), StandardCharsets.UTF_8);
     }
+
+    public static String bufferToString(ByteBuffer buffer) {
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
 }

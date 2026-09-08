@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -148,8 +150,21 @@ public class Node {
         }
     }
 
-    private void handleError(Map<String, Object> message) {
-        // TODO:
+    private void handleError(Map<String, Object> message, InetAddress address, int port) {
+        byte[] tid = Message.getBytes(message, "t");
+        String tidKey = Message.hex(tid);
+
+        PendingTx tx = pending.remove(tidKey);
+        if (tx == null) {
+            System.err.println("Unknown of expired request" + tidKey);
+            return;
+        }
+
+        List<Object> errorList = (List<Object>) message.get("e");
+        long errorCode = (Long) errorList.get(0);
+        String errorMsg = Message.bufferToString((ByteBuffer) errorList.get(1));
+
+        System.err.println("Error received from" + address + "from port: " + port + " [" + errorCode + "] " + errorMsg);
     }
 
     // -------------------------
