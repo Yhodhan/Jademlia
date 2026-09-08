@@ -22,17 +22,25 @@ public record Message(
     // Message creation
     // ---------------------------------
 
-    public static byte[] createPingMessage(byte[] tid, NodeId id) {
-        Map<String, Object> query = new LinkedHashMap<>();
-        query.put("t", tid);
-        query.put("y", "q");
-        query.put("q", "ping");
+    public static byte[] createPingMessage(byte[] tid, NodeId id, String y, MessageType type) {
+        Map<String, Object> msg = new LinkedHashMap<>();
+        msg.put("t", tid);
+        msg.put("y", y);
 
         Map<String, Object> args = new LinkedHashMap<>();
         args.put("id", id.id());
-        query.put("a", args);
 
-        return Bencoder.encodeMap(query);
+        switch (type) {
+            case PING:
+                msg.put("q", "ping");
+                msg.put("a", args);
+                break;
+            default: // Default PONG
+                msg.put("r", args);
+                break;
+        }
+
+        return Bencoder.encodeMap(msg);
     }
 
     // ---------------------------------

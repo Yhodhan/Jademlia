@@ -55,7 +55,7 @@ public class Node {
     public void ping(InetAddress address, int port) throws Exception {
         // build message
         byte[] tid = Message.generateTID();
-        byte[] message = Message.createPingMessage(tid, this.id);
+        byte[] message = Message.createPingMessage(tid, this.id, "q", MessageType.PING);
 
         // store transaction
         String tidKey = Message.hex(tid);
@@ -94,10 +94,13 @@ public class Node {
 
                 byte[] received = Arrays.copyOf(packet.getData(), packet.getLength());
                 handlePacket(received, packet.getAddress(), packet.getPort());
+
             } catch (IOException e) {
                 if (running) {
                     System.err.println("Error receiving packet: " + e.getMessage());
                 }
+            } catch (Exception e) {
+                System.err.println("Error receiving packet: " + e.getMessage());
             }
         }
     }
@@ -105,7 +108,7 @@ public class Node {
     // -------------------------
     // Package reception
     // -------------------------
-    private void handlePacket(byte[] packet, InetAddress fromAddress, int port) {
+    private void handlePacket(byte[] packet, InetAddress fromAddress, int port) throws Exception {
         Map<String, Object> message;
         try {
             message = (Map<String, Object>) Bencoder.decodeMap(packet);
@@ -117,16 +120,20 @@ public class Node {
         String y = Message.getString(message, "y");
 
         if ("q".equals(y)) { // Query
-            handleQuery(message);
+            handleQuery(message, fromAddress, port);
         } else if ("r".equals(y)) { // Response
             handleResponse(message, fromAddress, port);
         } else if ("e".equals(y)) { // Error
-            handleError(message);
+            handleError(message, fromAddress, port);
         }
     }
 
-    private void handleQuery(Map<String, Object> message) {
-        // TODO:
+    private void handleQuery(Map<String, Object> message, InetAddress address, int port) throws Exception {
+        String query = Message.getString(message, "q");
+
+        if ("ping".equals(query)) {
+            respondePing(address, port);
+        }
     }
 
     private void handleResponse(Map<String, Object> message, InetAddress address, int port) {
@@ -175,12 +182,24 @@ public class Node {
         Map<String, Object> contactInfo = (Map<String, Object>) message.get("r");
         byte[] contactId = Message.getBytes(contactInfo, "id");
 
-        System.out.println("Contact id: " + contactId);
         NodeId nodeId = new NodeId(contactId);
         Contact contact = new Contact(nodeId, address, port);
         // store contact
         this.routingTable.insert(contact);
 
-        logger.info("insertion succesfull");
+        logger.info(" === Insertion succesfull ===");
+    }
+
+    // -------------------------
+    // Handle each API call
+    // -------------------------
+    private void respondePing(InetAddress address, int port) throws Exception {
+        logger.info("PING query received");
+        byte[] tid = Message.generateTID();
+        byte[] message = Message.createPingMessage(tid, this.id, "r", MessageType.PONG);
+
+        // send message
+        socket.send(buildPacket(message, address, port));
+        logger.info("PONG response sended");
     }
 }
