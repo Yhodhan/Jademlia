@@ -9,8 +9,9 @@ public class Main {
         Node node = new Node();
         node.init();
 
-        InetAddress addr = InetAddress.getByName("dht.transmissionbt.com");
-        int port = 6881;
+        // InetAddress addr = InetAddress.getByName("dht.transmissionbt.com");
+        InetAddress addr = InetAddress.getByName("localhost");
+        int port = 6882;
 
         node.ping(addr, port);
     }

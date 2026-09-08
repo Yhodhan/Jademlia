@@ -130,10 +130,12 @@ public class Node {
     }
 
     private void handleQuery(Map<String, Object> message, InetAddress address, int port) throws Exception {
+        byte[] tid = Utils.getBytes(message, "t");
+
         String query = Utils.getString(message, "q");
 
         if ("ping".equals(query)) {
-            respondePing(address, port);
+            respondePing(tid, address, port);
         }
     }
 
@@ -194,9 +196,8 @@ public class Node {
     // -------------------------
     // Handle each API call
     // -------------------------
-    private void respondePing(InetAddress address, int port) throws Exception {
+    private void respondePing(byte[] tid, InetAddress address, int port) throws Exception {
         logger.info("PING query received");
-        byte[] tid = Utils.generateTID();
         byte[] message = Message.createPingMessage(tid, this.id, "r", MessageType.PONG);
 
         // send message
