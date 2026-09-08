@@ -1,5 +1,8 @@
 package org.garuda.kademlia.rpc;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -15,11 +18,9 @@ public record Message(
         Contact sender,
         byte[] payload) {
 
-    public static byte[] generateTID() {
-        byte[] id = new byte[2];
-        Node.RANDOM.nextBytes(id);
-        return id;
-    }
+    // ---------------------------------
+    // Message creation
+    // ---------------------------------
 
     public static byte[] createPingMessage(byte[] tid, NodeId id) {
         Map<String, Object> query = new LinkedHashMap<>();
@@ -32,5 +33,29 @@ public record Message(
         query.put("a", args);
 
         return Bencoder.encodeMap(query);
+    }
+
+    // ---------------------------------
+    // Helper functions
+    // ---------------------------------
+    public static byte[] generateTID() {
+        byte[] id = new byte[2];
+        Node.RANDOM.nextBytes(id);
+        return id;
+    }
+
+    public static String hex(byte[] bytes) {
+        return HexFormat.of().formatHex(bytes);
+    }
+
+    public static byte[] getBytes(Map<String, Object> message, String key) {
+        ByteBuffer buffer = (ByteBuffer) message.get(key);
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        return bytes;
+    }
+
+    public static String getString(Map<String, Object> message, String key) {
+        return new String(getBytes(message, key), StandardCharsets.UTF_8);
     }
 }

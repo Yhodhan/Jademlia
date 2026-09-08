@@ -6,7 +6,7 @@ import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 
 public class Bencoder {
-    public static final Bencode BENCODER = new Bencode();
+    public static final Bencode BENCODER = new Bencode(true);
 
     private Bencoder() {
     }
