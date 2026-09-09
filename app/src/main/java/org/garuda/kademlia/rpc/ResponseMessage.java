@@ -28,7 +28,7 @@ public class ResponseMessage {
 
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("id", id.id());
-        r.put("nodes", encodeContacts(contacts)); // helper, similar to FindNodeReplyPayload from earlier
+        r.put("nodes", Contact.encodeContacts(contacts)); // helper, similar to FindNodeReplyPayload from earlier
         msg.put("r", r);
 
         return Bencoder.encode(msg);

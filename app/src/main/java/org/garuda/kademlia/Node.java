@@ -61,15 +61,20 @@ public class Node {
 
         // store transaction
         String tidKey = Utils.hex(tid);
-        pending.put(tidKey, new PendingTx(address, MessageType.PING));
+        pending.put(tidKey, new PendingTx(MessageType.PING));
 
         // send message
         socket.send(buildPacket(message, address, port));
     }
 
-    public void find_node(Contact contact, NodeId target) {
+    public void find_node(Contact contact, NodeId target) throws Exception {
         byte[] tid = Utils.generateTID();
-        // byte[] message = QueryMessage.findNode(tid, this.id, );
+        byte[] message = QueryMessage.findNode(tid, this.id, target);
+
+        String tidKey = Utils.hex(tid);
+        pending.put(tidKey, new PendingTx(MessageType.FIND_NODE));
+
+        socket.send(buildPacket(message, contact.address(), contact.port()));
     }
 
     // -------------------------
@@ -79,9 +84,17 @@ public class Node {
         return this.socket;
     }
 
+    public RoutingTable getRoutingTable() {
+        return this.routingTable;
+    }
+
     public void stop() {
         running = false;
         socket.close();
+    }
+
+    public List<Contact> getContacts() {
+        return routingTable.getContacts();
     }
 
     // -------------------------
@@ -132,6 +145,8 @@ public class Node {
             handleResponse(message, fromAddress, port);
         } else if ("e".equals(y)) { // Error
             handleError(message, fromAddress, port);
+        } else {
+            System.err.println("Malformed package from " + fromAddress + ":" + port);
         }
     }
 
@@ -158,6 +173,10 @@ public class Node {
         switch (tx.type()) {
             case MessageType.PING:
                 handlePing(message, address, port);
+                break;
+
+            case MessageType.FIND_NODE:
+                handleFindNode(message, address, port);
                 break;
 
             default:
@@ -193,10 +212,21 @@ public class Node {
 
         NodeId nodeId = new NodeId(contactId);
         Contact contact = new Contact(nodeId, address, port);
+
         // store contact
         this.routingTable.insert(contact);
 
         logger.info(" === Insertion succesfull ===");
+    }
+
+    private void handleFindNode(Map<String, Object> message, InetAddress address, int port) {
+        byte[] nodes = (byte[]) message.get("nodes");
+        List<Contact> contacts = Contact.decodeContacts(nodes);
+        // remove yourself
+        // store them in the routing table
+        contacts.stream()
+                .filter(c -> !c.id().equals(this.id))
+                .forEach(this.routingTable::insert);
     }
 
     // -------------------------

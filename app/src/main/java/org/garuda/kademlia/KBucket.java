@@ -15,11 +15,20 @@ public class KBucket {
         return false;
     }
 
+    public Contact getContact(NodeId id) {
+        for (Contact c : contacts) {
+            if (c.id().equals(id)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
     public synchronized Contact lastRecentlySeen() {
         return contacts.peekFirst();
     }
 
-    public synchronized java.util.List<Contact> getContacts() {
-        return new LinkedList<>(contacts);
+    public synchronized LinkedList<Contact> getContacts() {
+        return contacts;
     }
 }

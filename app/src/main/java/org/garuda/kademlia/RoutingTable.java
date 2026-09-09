@@ -1,5 +1,10 @@
 package org.garuda.kademlia;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 public class RoutingTable {
 
     private final NodeId selfId;
@@ -17,6 +22,19 @@ public class RoutingTable {
         buckets[index].add(contact);
     }
 
+    public Contact getContact(NodeId id) {
+        NodeId distance = new NodeId(id.xorDistance(this.selfId));
+        int index = bucketIndex(distance);
+        KBucket bucket = getBucket(index);
+        return bucket.getContact(id);
+    }
+
+    public List<Contact> getContacts() {
+        return Arrays.stream(this.buckets).filter(Objects::nonNull)
+                .flatMap(bucket -> bucket.getContacts().stream())
+                .collect(Collectors.toList());
+    }
+
     protected int bucketIndex(NodeId id) {
         byte[] distance = id.xorDistance(this.selfId);
         // check the fist non 0 bit
@@ -29,6 +47,10 @@ public class RoutingTable {
         }
         // route to itself
         return 0;
+    }
+
+    private KBucket getBucket(int index) {
+        return buckets[index];
     }
 
     public static int compareDistances(byte[] d1, byte[] d2) {
