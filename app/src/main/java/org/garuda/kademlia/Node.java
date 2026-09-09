@@ -12,9 +12,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import org.garuda.kademlia.rpc.Message;
 import org.garuda.kademlia.rpc.MessageType;
 import org.garuda.kademlia.rpc.PendingTx;
+import org.garuda.kademlia.rpc.QueryMessage;
+import org.garuda.kademlia.rpc.ResponseMessage;
 import org.garuda.kademlia.utils.Utils;
 
 public class Node {
@@ -56,7 +57,7 @@ public class Node {
     public void ping(InetAddress address, int port) throws Exception {
         // build message
         byte[] tid = Utils.generateTID();
-        byte[] message = Message.createPingMessage(tid, this.id, "q", MessageType.PING);
+        byte[] message = QueryMessage.ping(tid, this.id);
 
         // store transaction
         String tidKey = Utils.hex(tid);
@@ -64,6 +65,11 @@ public class Node {
 
         // send message
         socket.send(buildPacket(message, address, port));
+    }
+
+    public void find_node(Contact contact, NodeId target) {
+        byte[] tid = Utils.generateTID();
+        // byte[] message = QueryMessage.findNode(tid, this.id, );
     }
 
     // -------------------------
@@ -112,7 +118,7 @@ public class Node {
     private void handlePacket(byte[] packet, InetAddress fromAddress, int port) throws Exception {
         Map<String, Object> message;
         try {
-            message = (Map<String, Object>) Bencoder.decodeMap(packet);
+            message = (Map<String, Object>) Bencoder.decode(packet);
         } catch (Exception e) {
             System.err.println("Malformed package from " + fromAddress + ":" + port);
             return;
@@ -198,7 +204,7 @@ public class Node {
     // -------------------------
     private void respondePing(byte[] tid, InetAddress address, int port) throws Exception {
         logger.info("PING query received");
-        byte[] message = Message.createPingMessage(tid, this.id, "r", MessageType.PONG);
+        byte[] message = ResponseMessage.pong(tid, this.id);
 
         // send message
         socket.send(buildPacket(message, address, port));

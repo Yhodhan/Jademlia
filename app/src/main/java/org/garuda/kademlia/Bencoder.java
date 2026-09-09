@@ -11,11 +11,11 @@ public class Bencoder {
     private Bencoder() {
     }
 
-    public static byte[] encodeMap(Map<String, Object> value) {
+    public static byte[] encode(Map<String, Object> value) {
         return BENCODER.encode(value);
     }
 
-    public static Object decodeMap(byte[] value) {
+    public static Object decode(byte[] value) {
         return BENCODER.decode(value, Type.DICTIONARY);
     }
 
